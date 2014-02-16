@@ -13,14 +13,14 @@ namespace Jay_Craft
 {
     public class Game1 : Microsoft.Xna.Framework.Game
     {
-        GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
-        VertexBuffer vertexBuffer;
-        BasicEffect basicEffect;
-        Matrix world;
-        Matrix view;
-        Matrix projection;
+        public GraphicsDeviceManager graphics;
+        public SpriteBatch spriteBatch;
+        public BasicEffect basicEffect;
+        public Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 3), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+        public Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 1, 0.01f, 100f);
         float aspectRatio;
+        Block block;
+        public Player player;
 
         public Game1()
         {
@@ -30,6 +30,14 @@ namespace Jay_Craft
 
         protected override void Initialize()
         {
+            //graphics.PreferredBackBufferWidth = 1280;
+            //graphics.PreferredBackBufferHeight = 720;
+            //graphics.ApplyChanges();
+
+            this.Window.AllowUserResizing = true;
+
+            player = new Player(0, 0, 3);
+
             base.Initialize();
         }
 
@@ -39,13 +47,7 @@ namespace Jay_Craft
 
             basicEffect = new BasicEffect(GraphicsDevice);
 
-            VertexPositionColor[] verticies = new VertexPositionColor[3];
-            verticies[0] = new VertexPositionColor(new Vector3(-.5f, .5f, 0), Color.Red);
-            verticies[1] = new VertexPositionColor(new Vector3(.5f, .5f, 0), Color.Red);
-            verticies[2] = new VertexPositionColor(new Vector3(-.5f, -.5f, 0), Color.Red);
-
-            vertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColor), 3, BufferUsage.WriteOnly);
-            vertexBuffer.SetData<VertexPositionColor>(verticies);
+            block = new Block(0, 0, 0, this);
         }
 
         protected override void UnloadContent()
@@ -58,10 +60,14 @@ namespace Jay_Craft
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
-            view = Matrix.CreateLookAt(new Vector3(0, 0, -10), Vector3.Zero, Vector3.Up);
-            aspectRatio = graphics.PreferredBackBufferWidth / graphics.PreferredBackBufferHeight;
-            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(30), aspectRatio, 0.01f, 100f);
+            float deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
+
+            view = Matrix.CreateLookAt(player.position, Vector3.Zero, Vector3.Up);
+            aspectRatio = graphics.GraphicsDevice.Viewport.Width / graphics.GraphicsDevice.Viewport.Height;
+            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), graphics.GraphicsDevice.Viewport.AspectRatio, 0.01f, 100f);
+
+            block.Update(this);
+            player.Update(this, deltaTime);
 
             base.Update(gameTime);
         }
@@ -70,22 +76,7 @@ namespace Jay_Craft
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            basicEffect.World = world;
-            basicEffect.View = view;
-            basicEffect.Projection = projection;
-            basicEffect.VertexColorEnabled = true;
-
-            GraphicsDevice.SetVertexBuffer(vertexBuffer);
-
-            RasterizerState rasterizerState = new RasterizerState();
-            rasterizerState.CullMode = CullMode.None;
-            GraphicsDevice.RasterizerState = rasterizerState;
-
-            foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 1);
-            }
+            block.Draw(this);
 
             base.Draw(gameTime);
         }
