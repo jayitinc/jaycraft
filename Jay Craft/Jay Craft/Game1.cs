@@ -62,12 +62,10 @@ namespace Jay_Craft
 
             float deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
 
-            view = Matrix.CreateLookAt(player.position, Vector3.Zero, Vector3.Up);
-            aspectRatio = graphics.GraphicsDevice.Viewport.Width / graphics.GraphicsDevice.Viewport.Height;
+            UpdateViewMatrix();
             projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), graphics.GraphicsDevice.Viewport.AspectRatio, 0.01f, 100f);
 
             block.Update(this);
-            player.Update(this, deltaTime);
 
             base.Update(gameTime);
         }
@@ -79,6 +77,43 @@ namespace Jay_Craft
             block.Draw(this);
 
             base.Draw(gameTime);
+        }
+
+        private void UpdateViewMatrix()
+        {
+            Matrix cameraRotation = Matrix.CreateRotationX(player.updownRot) * Matrix.CreateRotationY(player.leftrightRot);
+
+            Vector3 cameraOriginalTarget = new Vector3(0, 0, -1);
+            Vector3 cameraRotatedTarget = Vector3.Transform(cameraOriginalTarget, cameraRotation);
+            Vector3 cameraFinalTarget = player.position + cameraRotatedTarget;
+
+            Vector3 cameraOriginalUpVector = Vector3.Up;
+            Vector3 cameraRotatedUpVector = Vector3.Transform(cameraOriginalUpVector, cameraRotation);
+
+            view = Matrix.CreateLookAt(player.position, cameraFinalTarget, cameraRotatedUpVector);
+        }
+
+        private void ProcessInput(float amount)
+        {
+            Vector3 moveVector = Vector3.Zero;
+            KeyboardState keyState = Keyboard.GetState();
+            if (keyState.IsKeyDown(Keys.W))
+            {
+                moveVector += Vector3.Forward;
+            }
+            if (keyState.IsKeyDown(Keys.S))
+            {
+                moveVector += Vector3.Backward;
+            }
+            if (keyState.IsKeyDown(Keys.A))
+            {
+                moveVector += Vector3.Left;
+            }
+            if (keyState.IsKeyDown(Keys.D))
+            {
+                moveVector += Vector3.Right;
+            }
+            if (keyState
         }
     }
 
